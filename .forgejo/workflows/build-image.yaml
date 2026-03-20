@@ -1,0 +1,54 @@
+name: build-image
+
+on:
+  workflow_call:
+    outputs:
+      image_repository:
+        description: Harbor image repository
+        value: ${{ jobs.build.outputs.image_repository }}
+      image_digest:
+        description: Built image digest (sha256:...)
+        value: ${{ jobs.build.outputs.image_digest }}
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: stackit-ubuntu-22
+    env:
+      IMAGE_REPOSITORY: ${{ vars.HARBOR_REGISTRY }}/${{ vars.HARBOR_PROJECT }}/${{ vars.APP_NAME }}
+      FORCE_COLOR: "1"
+      CLICOLOR_FORCE: "1"
+      DOCKER_BUILDKIT: "1"
+      BUILDKIT_PROGRESS: plain
+    outputs:
+      image_repository: ${{ steps.meta.outputs.image_repository }}
+      image_digest: ${{ steps.meta.outputs.image_digest }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to STACKIT Harbor
+        env:
+          CONTAINER_REGISTRY: ${{ vars.HARBOR_REGISTRY }}
+          CONTAINER_REGISTRY_USERNAME: ${{ secrets.HARBOR_USERNAME }}
+          CONTAINER_REGISTRY_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
+        run: docker login "${CONTAINER_REGISTRY}" --username "${CONTAINER_REGISTRY_USERNAME}" --password-stdin <<<"${CONTAINER_REGISTRY_PASSWORD}"
+
+      - name: Build and push image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          GIT_SHA: ${{ github.sha }}
+          IMAGE_CACHE_REPOSITORY: ${{ vars.HARBOR_REGISTRY }}/${{ vars.HARBOR_PROJECT }}/${{ vars.APP_NAME }}-cache
+        run: ./.forgejo/workflows/scripts/docker-image-build.sh --push
+
+      - name: Output image repository and digest
+        id: meta
+        run: |
+          set -euo pipefail
+          image_digest="$(
+            python -c 'import json; print(json.load(open("build-metadata.json"))["containerimage.digest"])'
+          )"
+          {
+            echo "image_repository=${IMAGE_REPOSITORY}"
+            echo "image_digest=${image_digest}"
+          } | tee -a "${GITHUB_OUTPUT}"
