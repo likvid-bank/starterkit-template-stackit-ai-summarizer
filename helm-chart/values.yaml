@@ -1,0 +1,47 @@
+replicaCount: 2
+
+image:
+  # Set at deployment time by CI (`--set image.repository=...`).
+  repository: ""
+  # Set at deployment time by CI (`--set image.digest=...`).
+  digest: ""
+  pullPolicy: IfNotPresent
+
+# Stage used by the application and by optional stage overlays.
+stage: prod
+# Set at deployment time by CI (`--set appVersion=$GIT_SHA`).
+appVersion: ""
+
+containerPort: 8000
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  hostname: ""
+  tlsSecretName: ""
+
+stackitAiSecretName: stackit-ai
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+
+livenessProbe:
+  path: /health
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+readinessProbe:
+  path: /health
+  initialDelaySeconds: 5
+  periodSeconds: 5
+
+podAnnotations: {}
+podLabels: {}
