@@ -1,0 +1,48 @@
+name: deploy
+
+on:
+  workflow_call:
+    inputs:
+      stage:
+        description: Deployment stage (dev or prod)
+        required: true
+        type: string
+      image_repository:
+        description: Harbor image repository
+        required: true
+        type: string
+      image_digest:
+        description: Image digest (sha256:...)
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: stackit-ubuntu-22
+    env:
+      STAGE: ${{ inputs.stage }}
+      KUBECONFIG_YAML: ${{ inputs.stage == 'prod' && secrets.KUBECONFIG_PROD || secrets.KUBECONFIG_DEV }}
+      K8S_NAMESPACE: ${{ inputs.stage == 'prod' && vars.K8S_NAMESPACE_PROD || vars.K8S_NAMESPACE_DEV }}
+      APP_HOST_NAME: ${{ inputs.stage == 'prod' && vars.APP_HOSTNAME_PROD || vars.APP_HOSTNAME_DEV }}
+      APP_NAME: ${{ vars.APP_NAME }}
+      HELM_COLOR: always
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        run: ./.forgejo/workflows/scripts/deploy-install-helm.sh
+
+      - name: Prepare kubeconfig
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.kube"
+          cat >"${HOME}/.kube/config" <<<"${KUBECONFIG_YAML}"
+          chmod 600 "${HOME}/.kube/config"
+
+      - name: Deploy with Helm
+        env:
+          IMAGE_REPOSITORY: ${{ inputs.image_repository }}
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+          GIT_SHA: ${{ github.sha }}
+        run: ./.forgejo/workflows/scripts/deploy-with-helm.sh
