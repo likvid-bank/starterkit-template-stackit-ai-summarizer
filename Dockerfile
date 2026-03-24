@@ -2,7 +2,7 @@
 # Build from the repository root.
 # See .forgejo/workflows/scripts/docker-image-build.sh for the CI build script.
 
-FROM python:3.12.9-slim-bookworm
+FROM ghcr.io/likvid-bank/starterkit-template-stackit-ai-summarizer/python:3.12.9-slim-bookworm
 
 # Accept SOURCE_DATE_EPOCH from the build script for reproducible timestamps.
 # BuildKit natively clamps COPY/ADD file timestamps when this ARG is set.
