@@ -3,19 +3,9 @@ name: Build and deploy
 on:
   push:
     branches:
-      - main
+      - dev
+      - prod
   workflow_dispatch:
-    inputs:
-      only_stage:
-        description: "Target stage (dev or prod), leave empty for both."
-        required: false
-        type: string
-        default: ""
-      workflow_run_title:
-        description: "Optional custom workflow run title used for manual/connector dispatch."
-        required: false
-        type: string
-        default: ""
 
 jobs:
   build_image:
@@ -23,25 +13,12 @@ jobs:
     uses: ./.forgejo/workflows/build-image.yaml
     secrets: inherit
 
-  deploy_dev:
+  deploy:
     needs: build_image
-    if: ${{ !inputs.only_stage || inputs.only_stage == 'dev' }}
     runs-on: stackit-ubuntu-22
     uses: ./.forgejo/workflows/deploy.yaml
     with:
-      stage: dev
-      image_repository: ${{ needs.build_image.outputs.image_repository }}
-      image_digest: ${{ needs.build_image.outputs.image_digest }}
-    secrets: inherit
-
-  deploy_prod:
-    needs:
-      - build_image
-    if: ${{ !inputs.only_stage || inputs.only_stage == 'prod' }}
-    runs-on: stackit-ubuntu-22
-    uses: ./.forgejo/workflows/deploy.yaml
-    with:
-      stage: prod
+      stage: ${{ github.ref_name }}
       image_repository: ${{ needs.build_image.outputs.image_repository }}
       image_digest: ${{ needs.build_image.outputs.image_digest }}
     secrets: inherit
