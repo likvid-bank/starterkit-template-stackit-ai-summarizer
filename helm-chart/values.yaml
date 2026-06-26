@@ -26,9 +26,12 @@ ingress:
 stackitAiSecretName: stackit-ai
 
 resources:
+  # Overcommit on purpose for trial/demo: requests are set far below real usage
+  # so many tenant deployments pack onto the small shared cluster without filling
+  # up node capacity. Limits still cap real usage. Not intended for production.
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 5m
+    memory: 32Mi
   limits:
     cpu: 100m
     memory: 128Mi
