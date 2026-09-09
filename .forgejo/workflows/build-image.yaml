@@ -34,11 +34,23 @@ jobs:
           CONTAINER_REGISTRY_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
         run: docker login "${CONTAINER_REGISTRY}" --username "${CONTAINER_REGISTRY_USERNAME}" --password-stdin <<<"${CONTAINER_REGISTRY_PASSWORD}"
 
+      # GHCR pulls of the base image are slow from this runner and have caused
+      # build_image timeouts. Mirror it into Harbor once; the mirror is reused
+      # on every later run since the tag never changes.
+      - name: Mirror base image to Harbor
+        env:
+          BASE_IMAGE_SRC: ghcr.io/likvid-bank/starterkit-template-stackit-ai-summarizer/python:3.12.9-slim-bookworm
+          BASE_IMAGE_DST: ${{ vars.HARBOR_REGISTRY }}/${{ vars.HARBOR_PROJECT }}/${{ vars.APP_NAME }}-base:python-3.12.9-slim-bookworm
+        run: |
+          docker buildx imagetools inspect "${BASE_IMAGE_DST}" >/dev/null 2>&1 \
+            || docker buildx imagetools create --tag "${BASE_IMAGE_DST}" "${BASE_IMAGE_SRC}"
+
       - name: Build and push image
         env:
           IMAGE_TAG: ${{ github.sha }}
           GIT_SHA: ${{ github.sha }}
           IMAGE_CACHE_REPOSITORY: ${{ vars.HARBOR_REGISTRY }}/${{ vars.HARBOR_PROJECT }}/${{ vars.APP_NAME }}-cache
+          BASE_IMAGE: ${{ vars.HARBOR_REGISTRY }}/${{ vars.HARBOR_PROJECT }}/${{ vars.APP_NAME }}-base:python-3.12.9-slim-bookworm
         run: ./.forgejo/workflows/scripts/docker-image-build.sh --push
 
       - name: Output image repository and digest
