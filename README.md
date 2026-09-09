@@ -17,7 +17,7 @@ deployment.
 |---|---|
 | [`app/`](app/) | Python FastAPI application ([`main.py`](app/main.py), [`stackit_ai.py`](app/stackit_ai.py)) |
 | [`static/index.html`](static/index.html) | Single-page web UI (client-side Markdown rendering) |
-| [`Dockerfile`](Dockerfile) | Docker image based on `python:3.12-slim` |
+| [`Dockerfile`](Dockerfile) | Docker image based on `python:3.12.9-slim-bookworm` |
 | [`helm-chart/`](helm-chart/) | Helm chart for Kubernetes deployment (Ingress, TLS, health probes) |
 | [`.forgejo/workflows/`](.forgejo/workflows/) | CI/CD: image build, Helm deploy, pipeline orchestration |
 
