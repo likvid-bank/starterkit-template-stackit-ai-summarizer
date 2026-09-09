@@ -39,6 +39,10 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GIT_SHA: ${{ github.sha }}
           IMAGE_CACHE_REPOSITORY: ${{ vars.HARBOR_REGISTRY }}/${{ vars.HARBOR_PROJECT }}/${{ vars.APP_NAME }}-cache
+          # Pulling the base image from a public registry is slow from this runner and has caused
+          # build_image timeouts. Harbor sits next to the runner. The platform team mirrors the
+          # image into Harbor manually, once per tag.
+          BASE_IMAGE: ${{ vars.HARBOR_REGISTRY }}/${{ vars.HARBOR_PROJECT }}/python:3.12.9-slim-bookworm
         run: ./.forgejo/workflows/scripts/docker-image-build.sh --push
 
       - name: Output image repository and digest

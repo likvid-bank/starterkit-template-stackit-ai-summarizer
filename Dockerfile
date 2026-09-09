@@ -2,7 +2,10 @@
 # Build from the repository root.
 # See .forgejo/workflows/scripts/docker-image-build.sh for the CI build script.
 
-FROM ghcr.io/likvid-bank/starterkit-template-stackit-ai-summarizer/python:3.12.9-slim-bookworm
+# Defaults to upstream so local builds work without registry credentials. CI overrides this with
+# the Harbor mirror, which is much faster from the Forgejo runner (see build-image.yaml).
+ARG BASE_IMAGE=docker.io/library/python:3.12.9-slim-bookworm
+FROM ${BASE_IMAGE}
 
 # Accept SOURCE_DATE_EPOCH from the build script for reproducible timestamps.
 # BuildKit natively clamps COPY/ADD file timestamps when this ARG is set.
