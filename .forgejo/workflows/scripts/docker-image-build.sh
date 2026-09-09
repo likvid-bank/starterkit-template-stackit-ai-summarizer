@@ -51,6 +51,10 @@ if [[ -n "${IMAGE_CACHE_REPOSITORY:-}" ]]; then
   build_cmd+=(--cache-to "type=registry,ref=${IMAGE_CACHE_REPOSITORY}:buildcache,mode=max")
 fi
 
+if [[ -n "${BASE_IMAGE:-}" ]]; then
+  build_cmd+=(--build-arg "BASE_IMAGE=${BASE_IMAGE}")
+fi
+
 build_cmd+=("$@")
 build_cmd+=(.)
 
